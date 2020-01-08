@@ -15,7 +15,6 @@
 #include "LinkedList.h"
 
 void printLine();
-void printList(char* filename);
 void getInp(char* input, char* message);
 void addEntry(char* filename);
 void writeEntry(char* date, char* title, char* time, char* description, char* filename);
@@ -25,24 +24,9 @@ int* findDate(char input[]);
 
 
 void printLine(){
-    printf("\t__________________________________________________________________________________________________\n");
+    printf("__________________________________________________________________________________________________\n");
 }
 
-void printList(char* filename){
-    char line[MAX_LINE_LENGTH];
-    FILE* list = fopen(filename, "r");
-    //Header in Console
-    printf("\n\t\t\t\t\t\tTO-DO LIST::\n");
-    printLine();
-
-    //Actual Read/Print from file
-    while(fgets(line, MAX_LINE_LENGTH, list) != NULL){
-        printf(line);
-    }
-
-    printf("\n\n");
-    fclose(list);
-}
 
 void getInp(char* input, char* message){
     printf("%s", message);
