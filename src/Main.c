@@ -37,7 +37,7 @@ int main(void){
     struct DayNode* listRoot = buildList(list);
     fclose(list);
 
-    printAll(&listRoot);
+    printList(&listRoot);
 
     //printList(filename);
 
@@ -61,7 +61,7 @@ int main(void){
             break;
         case 's':
         case 'S':
-            printList(filename);
+            printList(&listRoot);
             break;
         case 'q':
         case 'Q':

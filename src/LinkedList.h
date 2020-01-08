@@ -40,7 +40,7 @@ struct DayNode* addDay(struct DayNode **root, int day, int month, int year);
 struct DayNode* buildList(FILE* file);
 void addTask(struct DayNode **target, int priority, char* title, char* timeDue, char* description);
 void freeList(struct DayNode** root);
-void printAll(struct DayNode** root);
+void printList(struct DayNode** root);
 
 
 
@@ -183,7 +183,7 @@ void addTask(struct DayNode **target, int priority, char* title, char* timeDue, 
 	tPtr->next = newTask;
 }
 
-void printAll(struct DayNode **root){
+void printList(struct DayNode **root){
 
 	struct DayNode* dPtr = *root;
 	struct TaskNode* tPtr;
