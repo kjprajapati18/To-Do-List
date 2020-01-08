@@ -26,9 +26,9 @@ struct DayNode{
 struct TaskNode{
 
 	int priority;
-	char *title;
-	char *timeDue;
-	char *description;
+	char title[MAX_LINE_LENGTH];
+	char timeDue[MAX_LINE_LENGTH];
+	char description[MAX_LINE_LENGTH];
 
 	struct TaskNode *next;
 
@@ -40,6 +40,7 @@ struct DayNode* addDay(struct DayNode **root, int day, int month, int year);
 struct DayNode* buildList(FILE* file);
 void addTask(struct DayNode **target, int priority, char* title, char* timeDue, char* description);
 void freeList(struct DayNode** root);
+void printAll(struct DayNode** root);
 
 
 
@@ -60,45 +61,44 @@ struct DayNode* addDay(struct DayNode **root, int day, int month, int year){
 
 
 	//Initialize the new Node
+	struct DayNode *ptr = *root;
 	struct DayNode *newDay = (struct DayNode*) malloc(sizeof(struct DayNode));
+	struct DayNode *next = ptr->next;
 	newDay->day = day;
 	newDay->month = month;
 	newDay->year = year;
 	newDay->size = 0;
 	newDay->first = NULL;
+	newDay->next = NULL;
 
 	//Note that the root never needs to be changed since it is initialized to "U" (unordered list first)
 	//Technically this means we can use *root instead of **root
-	while((*root)->next != NULL){
+	while(next != NULL){
 		//If the new date precedes the next LL item, then we're going to insert at this spot
-		if((*root)->next->year > year || ((*root)->next->month > month && (*root)->next->year == year) || ((*root)->next->day > day && (*root)->next->month == month && (*root)->next->year == year)){
+
+		if(next->year > year || (next->month > month && next->year == year) || (next->day >= day && next->month == month && next->year == year)){
 
 			//Check if the day is already there;
-			if((*root)->next->day == day && (*root)->next->month == month && (*root)->next->year == year){
+			if(next->day == day && next->month == month && next->year == year){
 				free(newDay);
-				return (*root)->next;
+				return next;
 			}
 
 			//Add if its not already there
-			newDay->next = (*root)->next;
-			(*root)->next = newDay;
+			newDay->next = next;
+			ptr->next = newDay;
 			return newDay;
 		}
 
-		(*root) = (*root)->next;
+		ptr = next;
+		next = next->next;
 	}
 
-	free(newDay);
-	return NULL;
+	ptr->next = newDay;
+	return newDay;
 }
 
-/* !!	Problem with buildList:
- * !!
- * !!  		BuildList will read up to a space, however, title/date/descrip all have spaces in them
- * !!		Need some way that the problem can differentiate between the 3 so it can add tasks properly
- * !!
- * !!
- */
+
 struct DayNode* buildList(FILE* file){
 
 	char readLine[MAX_LINE_LENGTH]; //Used to check if tasks need to be added at a differnet part of LL
@@ -114,7 +114,8 @@ struct DayNode* buildList(FILE* file){
 
 	while(fgets(readLine, MAX_LINE_LENGTH, file) != NULL){
 
-		if(readLine[0] == '_'){ //Underscores used to visually separate dates in the list, skip over these
+		if(readLine[0] == '_' || readLine[0] == '\n' || (readLine[0] == '\t' && (readLine[1] == '\n' || readLine[1] == '\t')) ){
+			//Underscores and blank spaces after dates/tasks are used for visual purposes, skip over these
 			continue;
 		}
 
@@ -127,6 +128,7 @@ struct DayNode* buildList(FILE* file){
 			free(date);
 			date = findDate(readLine);
 			ptr = addDay(&root, date[0], date[1], date[2]);
+			fgets(title, MAX_LINE_LENGTH, file); //The next line after a date will always be a ________
 			if(fgets(title, MAX_LINE_LENGTH, file) == NULL) break;
 
 		} else {
@@ -145,23 +147,22 @@ struct DayNode* buildList(FILE* file){
 void addTask(struct DayNode **target, int priority, char* title, char* timeDue, char* description){
 
 	struct TaskNode *newTask = (struct TaskNode*) malloc(sizeof(struct TaskNode));
-	newTask->title = title;
-	newTask->timeDue = timeDue;
-	newTask->description = description;
+	strcpy(newTask->title,title);
+	strcpy(newTask->timeDue, timeDue);
+	strcpy(newTask->description, description);
 	newTask->priority = priority;
 	newTask->next = NULL;
 
 	struct DayNode *dPtr = *target;
+	dPtr->size++;
 
 	//If there are no tasks in this day, then no need to check priorities
-	if(dPtr->size == 0){
+	if(dPtr->size == 1){
 		dPtr->first = newTask;
-		dPtr->size++;
 		return;
 	}
-
 	//For lengths != 0, we can always check the first element and add front if its lower priority than the new task
-	if(dPtr->first->priority < priority){
+	if(dPtr->first->priority > priority){
 		newTask->next = dPtr->first;
 		dPtr->first = newTask;
 		return;
@@ -170,7 +171,7 @@ void addTask(struct DayNode **target, int priority, char* title, char* timeDue, 
 	//We need to start checking the next few priorities. Note that if length equals 1, then it will not go to loop
 	struct TaskNode *tPtr = dPtr->first;
 	while(tPtr->next != NULL){
-		if(tPtr->next->priority < priority){
+		if(tPtr->next->priority > priority){
 			newTask->next = tPtr->next;
 			tPtr->next = newTask;
 			return;
@@ -181,6 +182,37 @@ void addTask(struct DayNode **target, int priority, char* title, char* timeDue, 
 	//Task is the lowest priority in the list
 	tPtr->next = newTask;
 }
+
+void printAll(struct DayNode **root){
+
+	struct DayNode* dPtr = *root;
+	struct TaskNode* tPtr;
+
+	while(dPtr != NULL){
+		if(dPtr->day == 0){
+			printf("U: \n");
+		} else {
+			printf("%d/%d/%d\n", dPtr->month, dPtr->day, dPtr->year);
+		}
+		printLine();
+
+		tPtr = dPtr->first;
+		while(tPtr != NULL){
+			printf(tPtr->title);
+			printf(tPtr->timeDue);
+			printf(tPtr->description);
+			tPtr = tPtr->next;
+		}
+
+		printf("\n");
+		printLine();
+		dPtr = dPtr->next;
+	}
+
+	printf("END\n");
+}
+
+
 
 /* This will free the LinkedLists. It starts with the first day, which is the given argument.
  * On the given day, it will first remove tasks 2 to the end if they exist. It will then remove the first task if it exists.
