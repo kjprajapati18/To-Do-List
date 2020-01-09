@@ -53,7 +53,7 @@ int main(void){
         case 'a':
         case 'A':
             //Add an entry
-            addEntry(filename);
+            addEntry(listRoot);
             break;
         case 'c':
         case 'C':

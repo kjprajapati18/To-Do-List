@@ -16,8 +16,6 @@
 
 void printLine();
 void getInp(char* input, char* message);
-void addEntry(char* filename);
-void writeEntry(char* date, char* title, char* time, char* description, char* filename);
 int* findDate(char input[]);
 
 
@@ -33,36 +31,11 @@ void getInp(char* input, char* message){
     gets(input);
 }
 
-void addEntry(char* filename){
-	//Initialize variables needed
-    char date[MAX_LINE_LENGTH];
-    char title[MAX_LINE_LENGTH];
-    char timeDue[20];
-    char description[MAX_LINE_LENGTH];
-    date[0] = '\0';
-    title[0] = '\0';
-    timeDue[0] = '\0';
-    description[0] = '\0';
 
-    //Request inputs
-    getInp(date, "What day would you like to add an entry for (enter U for unordered list)? ");
-    //Find which day to put this entry
-    int day = -1;
-    getInp(title, "Please enter a title: ");
-    getInp(timeDue, "Enter a time due (Optional): ");
-    getInp(description, "Enter a description (Optional): ");
-
-    //-1 means that its a part of the unordered list*
-    if(day == -1){
-    	writeEntry("U", title, timeDue, description, filename);
-    }
-
-
-}
 
 int* findDate(char input[]){
     if(input[0] == 'u' || input[0] == 'U'){
-        return NULL;
+        return (int *) -1;
     }
 
 	int* date = (int*) malloc(3*sizeof(int));
@@ -82,16 +55,18 @@ int* findDate(char input[]){
 		*(date+count) += input[i] - '0';
 	}
 
-	//Flip the second and first entry because it is written as mm/dd/yyyy but needs to be stored d,m,y
+	//Flip the second and first entry because it is written as mm/dd/yy but needs to be stored d,m,y
 	int temp = *(date+1);
 	*(date+1) = *date;
 	*date = temp;
 
+	//In case 4 digit year is given
+	*(date+2) %= 100;
     return date;
 
 }
 
-void writeEntry(char* date, char* title, char* time, char* description, char* filename){
+/*void writeEntry(char* date, char* title, char* time, char* description, char* filename){
 
 	FILE* list = fopen(filename, "r+");
 	int spacing = 9;
@@ -115,7 +90,7 @@ void writeEntry(char* date, char* title, char* time, char* description, char* fi
 	strcat(toWrite, description);
 	strcat(toWrite, "\n");
 
-	fputs(toWrite, list);*/
+	fputs(toWrite, list);
 
 	fputs(date, list);
 	fputs(":\t", list);
@@ -129,6 +104,7 @@ void writeEntry(char* date, char* title, char* time, char* description, char* fi
 	fclose(list);
 
 }
+*/
 
 
 #endif /* LISTHANDLER_H_ */

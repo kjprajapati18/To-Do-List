@@ -38,7 +38,12 @@ struct TaskNode{
 struct DayNode* init();
 struct DayNode* addDay(struct DayNode **root, int day, int month, int year);
 struct DayNode* buildList(FILE* file);
+
+void incPriorities(struct TaskNode* start);
 void addTask(struct DayNode **target, int priority, char* title, char* timeDue, char* description);
+void addEntry(struct DayNode* root);
+void writeEntry(struct DayNode* root, char* date, char* title, char* time, char* desc, int priority);
+
 void freeList(struct DayNode** root);
 void printList(struct DayNode** root);
 
@@ -58,7 +63,6 @@ struct DayNode* init(){
 
 //Does not allow duplicates, returns a DayNode so that we can either use the new DayNode an existing one, meaning it double functions as a search
 struct DayNode* addDay(struct DayNode **root, int day, int month, int year){
-
 
 	//Initialize the new Node
 	struct DayNode *ptr = *root;
@@ -144,6 +148,7 @@ struct DayNode* buildList(FILE* file){
 	return root; //Return the root, which contains the whole list in LL format
 }
 
+//Adds Task to LinkedList structure
 void addTask(struct DayNode **target, int priority, char* title, char* timeDue, char* description){
 
 	struct TaskNode *newTask = (struct TaskNode*) malloc(sizeof(struct TaskNode));
@@ -162,18 +167,20 @@ void addTask(struct DayNode **target, int priority, char* title, char* timeDue, 
 		return;
 	}
 	//For lengths != 0, we can always check the first element and add front if its lower priority than the new task
-	if(dPtr->first->priority > priority){
+	if(dPtr->first->priority >= priority){
 		newTask->next = dPtr->first;
 		dPtr->first = newTask;
+		if(priority == newTask->next->priority) incPriorities(newTask->next);
 		return;
 	}
 
 	//We need to start checking the next few priorities. Note that if length equals 1, then it will not go to loop
 	struct TaskNode *tPtr = dPtr->first;
 	while(tPtr->next != NULL){
-		if(tPtr->next->priority > priority){
+		if(tPtr->next->priority >= priority){
 			newTask->next = tPtr->next;
 			tPtr->next = newTask;
+			if(priority == newTask->next->priority) incPriorities(newTask->next);
 			return;
 		}
 		tPtr = tPtr->next;
@@ -181,6 +188,49 @@ void addTask(struct DayNode **target, int priority, char* title, char* timeDue, 
 
 	//Task is the lowest priority in the list
 	tPtr->next = newTask;
+}
+
+//Increments the priorities of each item afterwards to maintain hierarchy
+void incPriorities(struct TaskNode* start){
+	struct TaskNode* ptr = start;
+	while(ptr != NULL){
+		ptr->priority++;
+		ptr = ptr->next;
+	}
+}
+
+//Gets User input and prepares for task to be added
+void addEntry(struct DayNode* root){
+	//Initialize variables needed
+	struct DayNode* dPtr;
+    char date[MAX_LINE_LENGTH];
+    char title[MAX_LINE_LENGTH];
+    char timeDue[20];
+    char description[MAX_LINE_LENGTH];
+    int priority;
+    date[0] = '\0';
+    title[0] = '\0';
+    timeDue[0] = '\0';
+    description[0] = '\0';
+
+    //Request inputs
+    getInp(date, "What date would you like to add an entry for (enter U for unordered list, else mm/dd/yy)? ");
+    getInp(title, "Please enter a title: ");
+    getInp(timeDue, "Enter a time due (Optional): ");
+    getInp(description, "Enter a description (Optional): ");
+    printf("What number entry should this be for that day (1= first entry, 2= second, etc.): ");
+    scanf("%d", priority);
+
+    //Find which day to put this entry
+    int* day = findDate(date);
+
+    //-1 means that its a part of the unordered list*
+    if(*day == -1){
+    	//writeEntry("U", title, timeDue, description, filename);
+    } else {
+    	dPtr = addDay(&root, day[0], day[1], day[2]);
+    	addTask(&dPtr, priority, title, timeDue, description);
+    }
 }
 
 void printList(struct DayNode **root){
