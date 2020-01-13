@@ -34,12 +34,12 @@ int main(void){
             fclose(list);
         }
     } while (list == NULL);
+
     struct DayNode* listRoot = buildList(list);
     fclose(list);
+    createBackUp(filename);
 
     printList(&listRoot);
-
-    //printList(filename);
 
     //Main loop where user enters actions to perform
     int loop = 1;
@@ -53,7 +53,7 @@ int main(void){
         case 'a':
         case 'A':
             //Add an entry
-            addEntry(listRoot);
+            userAddEntry(listRoot);
             break;
         case 'c':
         case 'C':

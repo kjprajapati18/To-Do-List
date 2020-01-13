@@ -15,6 +15,7 @@
 #include "LinkedList.h"
 
 void printLine();
+void createBackUp(char* filename);
 void getInp(char* input, char* message);
 int* findDate(char input[]);
 
@@ -31,15 +32,37 @@ void getInp(char* input, char* message){
     gets(input);
 }
 
+void createBackUp(char* filename){
+	char tempFile[strlen(filename) + 5];
+	strncpy(tempFile, filename, strlen(filename)-4);
+	tempFile[strlen(filename)-4] = '\0'; //Debugging strncpy because for some reason it adds an extra "Rb@"
+	strcat(tempFile, "OLD.txt");
 
+	FILE *file, *write;
+	file = fopen(filename, "r");
+	write = fopen(tempFile, "w");
 
+	char read[MAX_LINE_LENGTH];
+	while(fgets(read, MAX_LINE_LENGTH, file) != NULL){
+		fputs(read, write);
+	}
+
+	fclose(file);
+	fclose(write);
+}
+
+//Returns an int array of size 3: {day, month, year}
 int* findDate(char input[]){
-    if(input[0] == 'u' || input[0] == 'U'){
-        return (int *) -1;
-    }
 
+
+	//Initialize an int array of 3 with all 0's.
 	int* date = (int*) malloc(3*sizeof(int));
 	for(int i =0; i < 3; i++) *(date+i) = 0;
+    if(input[0] == 'u' || input[0] == 'U'){
+        return date;
+    }
+
+	//Counter for pointer arithmetic
 	int count = 0;
 
 	for(int i = 0; (i < strlen(input) && count < 3); i++){
@@ -65,46 +88,6 @@ int* findDate(char input[]){
     return date;
 
 }
-
-/*void writeEntry(char* date, char* title, char* time, char* description, char* filename){
-
-	FILE* list = fopen(filename, "r+");
-	int spacing = 9;
-	//Calculate the amount of space needed between title and time to keep things lined up.
-	char dtTabs[spacing+1];
-	int numDT = spacing - ((strlen(title)-1)/8);
-	if (numDT < 0) numDT = 0;
-	for(int i = 0; i < numDT; i++) dtTabs[i] = '\t';
-	dtTabs[numDT] = '\0';
-
-	//Building the String
-	/*int writeLen = strlen(date) + 2 + strlen(title) + strlen(dtTabs) + strlen(time) + 3 + strlen(description) + 1 + 8; //the 8 is to play safety
-	char toWrite[writeLen];
-	toWrite[0] = '\0';
-	strcat(toWrite, date);
-	strcat(toWrite, ":\t");
-	strcat(toWrite, title);
-	strcat(toWrite, dtTabs);
-	strcat(toWrite, time);
-	strcat(toWrite, "\n\t\t");
-	strcat(toWrite, description);
-	strcat(toWrite, "\n");
-
-	fputs(toWrite, list);
-
-	fputs(date, list);
-	fputs(":\t", list);
-	fputs(title, list);
-	fputs(dtTabs, list);
-	fputs(time, list);
-	fputs("\n\t\t", list);
-	fputs(description, list);
-	fputs("\n", list);
-
-	fclose(list);
-
-}
-*/
 
 
 #endif /* LISTHANDLER_H_ */

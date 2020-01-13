@@ -41,8 +41,7 @@ struct DayNode* buildList(FILE* file);
 
 void incPriorities(struct TaskNode* start);
 void addTask(struct DayNode **target, int priority, char* title, char* timeDue, char* description);
-void addEntry(struct DayNode* root);
-void writeEntry(struct DayNode* root, char* date, char* title, char* time, char* desc, int priority);
+void userAddEntry(struct DayNode* root);
 
 void freeList(struct DayNode** root);
 void printList(struct DayNode** root);
@@ -63,6 +62,8 @@ struct DayNode* init(){
 
 //Does not allow duplicates, returns a DayNode so that we can either use the new DayNode an existing one, meaning it double functions as a search
 struct DayNode* addDay(struct DayNode **root, int day, int month, int year){
+
+	if(day == 0) return *root;
 
 	//Initialize the new Node
 	struct DayNode *ptr = *root;
@@ -109,6 +110,10 @@ struct DayNode* buildList(FILE* file){
 	char title[MAX_LINE_LENGTH];
 	char time[MAX_LINE_LENGTH];
 	char description[MAX_LINE_LENGTH];
+	readLine[0] = '\0';
+	title[0] = '\0';
+	time[0] = '\0';
+	description[0] = '\0';
 
 	int* date = NULL; //day, month, year
 	int priority;
@@ -139,7 +144,8 @@ struct DayNode* buildList(FILE* file){
 			strcpy(title, readLine); //else, there is no date change, just add to the same date as previous iteration
 		}
 
-		if(fgets(time, MAX_LINE_LENGTH, file) == NULL || fgets(description, MAX_LINE_LENGTH, file) == NULL) break; //break on any errors
+		if(fgets(time, MAX_LINE_LENGTH, file) == NULL) break; //break on any errors
+		if(fgets(description, MAX_LINE_LENGTH, file) == NULL) break;
 		priority = ptr->size + 1; //Priority is set in ascending order (smallest number = first in list)
 		addTask(&ptr, priority, title, time, description);
 	}
@@ -200,13 +206,14 @@ void incPriorities(struct TaskNode* start){
 }
 
 //Gets User input and prepares for task to be added
-void addEntry(struct DayNode* root){
+void userAddEntry(struct DayNode* root){
 	//Initialize variables needed
 	struct DayNode* dPtr;
     char date[MAX_LINE_LENGTH];
     char title[MAX_LINE_LENGTH];
     char timeDue[20];
     char description[MAX_LINE_LENGTH];
+    char priorityStr[10];
     int priority;
     date[0] = '\0';
     title[0] = '\0';
@@ -216,23 +223,39 @@ void addEntry(struct DayNode* root){
     //Request inputs
     getInp(date, "What date would you like to add an entry for (enter U for unordered list, else mm/dd/yy)? ");
     getInp(title, "Please enter a title: ");
-    getInp(timeDue, "Enter a time due (Optional): ");
-    getInp(description, "Enter a description (Optional): ");
-    printf("What number entry should this be for that day (1= first entry, 2= second, etc.): ");
-    scanf("%d", priority);
+    getInp(timeDue, "Enter a time due: ");
+    getInp(description, "Enter a description: ");
+    getInp(priorityStr, "What number entry should this be for that day (1= first entry, 2= second, etc.): ");
+    priority = atoi(priorityStr);
 
     //Find which day to put this entry
     int* day = findDate(date);
 
+    //Add spaces to match formatting
+    int titleLen = strlen(title);
+    int timeLen = strlen(timeDue);
+    title[titleLen] = '\n';
+    title[titleLen+1] = '\t';
+    title[titleLen+2] = '\0';
+    timeDue[timeLen] = '\n';
+    timeDue[timeLen+1] = '\t';
+    timeDue[timeLen+2] = '\0';
+    description[strlen(description)+1] = '\0';
+    description[strlen(description)] = '\n';
+
+
     //-1 means that its a part of the unordered list*
-    if(*day == -1){
+    if((*day) == -1){
+        printf("good");
     	//writeEntry("U", title, timeDue, description, filename);
     } else {
     	dPtr = addDay(&root, day[0], day[1], day[2]);
     	addTask(&dPtr, priority, title, timeDue, description);
     }
+    free(day);
 }
 
+//Print current LinkedList
 void printList(struct DayNode **root){
 
 	struct DayNode* dPtr = *root;
