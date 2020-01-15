@@ -45,6 +45,7 @@ void userAddEntry(struct DayNode* root);
 
 void freeList(struct DayNode** root);
 void printList(struct DayNode** root);
+void saveList(struct DayNode** root, char* filename);
 
 
 
@@ -285,6 +286,37 @@ void printList(struct DayNode **root){
 	printf("END\n");
 }
 
+//Saves the list to the text file it is used to read the list
+void saveList(struct DayNode** root, char* filename){
+	struct DayNode* dPtr = *root;
+	struct TaskNode* tPtr;
+
+	FILE* write = fopen(filename, "w");
+
+	while(dPtr != NULL){
+		if(dPtr->day == 0){
+			fputs("U: \n", write);
+		} else {
+			char date[10];
+			sprintf(date, "%d/%d/%d\n", dPtr->month, dPtr->day, dPtr->year);
+			fputs(date, write);
+		}
+		fputs("__________________________________________________________________________________________________\n", write);
+
+		tPtr = dPtr->first;
+		while(tPtr != NULL){
+			fputs(tPtr->title, write);
+			fputs(tPtr->timeDue, write);
+			fputs(tPtr->description, write);
+			tPtr = tPtr->next;
+		}
+
+		fputs("\n__________________________________________________________________________________________________\n", write);
+		dPtr = dPtr->next;
+	}
+
+	fclose(write);
+}
 
 
 /* This will free the LinkedLists. It starts with the first day, which is the given argument.

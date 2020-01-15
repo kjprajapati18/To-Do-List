@@ -73,6 +73,7 @@ int main(void){
             break;
         }
         input[0] = '\0';
+        saveList(&listRoot, filename);
     }
 
     free(input);
