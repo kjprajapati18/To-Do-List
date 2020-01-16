@@ -41,7 +41,9 @@ struct DayNode* buildList(FILE* file);
 
 void incPriorities(struct TaskNode* start);
 void addTask(struct DayNode **target, int priority, char* title, char* timeDue, char* description);
-void userAddEntry(struct DayNode* root);
+
+void userAddEntry(struct DayNode** root);
+void userCheckEntry(struct DayNode** root);
 
 void freeList(struct DayNode** root);
 void printList(struct DayNode** root);
@@ -207,7 +209,7 @@ void incPriorities(struct TaskNode* start){
 }
 
 //Gets User input and prepares for task to be added
-void userAddEntry(struct DayNode* root){
+void userAddEntry(struct DayNode** root){
 	//Initialize variables needed
 	struct DayNode* dPtr;
     char date[MAX_LINE_LENGTH];
@@ -250,11 +252,66 @@ void userAddEntry(struct DayNode* root){
         printf("good");
     	//writeEntry("U", title, timeDue, description, filename);
     } else {
-    	dPtr = addDay(&root, day[0], day[1], day[2]);
+    	dPtr = addDay(root, day[0], day[1], day[2]);
     	addTask(&dPtr, priority, title, timeDue, description);
     }
     free(day);
 }
+
+void userCheckEntry(struct DayNode** root){
+
+	char input[MAX_LINE_LENGTH];
+	char* ePtr;
+	struct DayNode* dPtr = *root;
+	struct TaskNode* tPtr;
+	int* date;
+	int taskNumber = 0;
+
+	//Get the day. Give the option to back out
+	getInp(input, "What day would you like to check off an entry for (U for unordered, B to back): ");
+	if(input[0] == 'b' || input[0] == 'B') return;
+
+	if(!(input[0] == 'u' || input[0] == 'U')){
+		date = findDate(input);
+		while(dPtr != NULL){
+			if(dPtr->day == date[0] && dPtr->month == date[1] && dPtr->year == date[2]) break;
+			dPtr = dPtr->next;
+		}
+	}
+	if(dPtr == NULL || dPtr->size == 0){
+		printf("\nThere are no tasks in this day to complete!\n");
+		return;
+	}
+
+	//Now that we have the day, find the task
+	do{
+
+		printf("The date you have selected is %d/%d/%d and there are %d entries.\n", dPtr->month, dPtr->day, dPtr->year, dPtr->size);
+		getInp(input, "What number task would you like to check off (1=first, 2=second, etc., B to back): ");
+		taskNumber = (int) strtol(input, &ePtr, 10);
+		if(taskNumber < 1 || taskNumber > dPtr->size) printf("Invalid number. Please try again or enter B to back...\n");
+
+	}while(taskNumber < 1 || taskNumber > dPtr->size);
+
+	taskNumber--;
+	tPtr = dPtr->first;
+	if(taskNumber == 0){
+		dPtr->first = tPtr->next;
+		free(tPtr);
+		return;
+	}
+
+	while(taskNumber>1){
+		tPtr = tPtr->next;
+		taskNumber--;
+	}
+
+	struct TaskNode* temp = tPtr->next;
+	tPtr->next = temp->next;
+	free(temp);
+}
+
+
 
 //Print current LinkedList
 void printList(struct DayNode **root){

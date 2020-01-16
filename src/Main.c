@@ -44,7 +44,7 @@ int main(void){
     //Main loop where user enters actions to perform
     int loop = 1;
     while(loop == 1){
-        getInp(input, "\nWould you like to ADD an entry (a), CHECK off/CHANGE an entry (c), SEE the list (s), or QUIT (q)? ");
+        getInp(input, "\nWould you like to ADD an entry (a), CHECK off an entry (c), EDIT an entry (e), SEE the list (s), or QUIT (q)? ");
         if(input == NULL){
             printf("Null entry \n");
             continue;
@@ -53,12 +53,16 @@ int main(void){
         case 'a':
         case 'A':
             //Add an entry
-            userAddEntry(listRoot);
+            userAddEntry(&listRoot);
             break;
         case 'c':
         case 'C':
             //Check/Complete an existing item in list
+        	userCheckEntry(&listRoot);
             break;
+        case 'e':
+        case 'E':
+        	//Edit an entry
         case 's':
         case 'S':
             printList(&listRoot);
