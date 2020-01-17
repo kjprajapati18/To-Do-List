@@ -200,11 +200,12 @@ void addTask(struct DayNode **target, int priority, char* title, char* timeDue, 
 }
 
 void changeTaskPriority(struct DayNode* day, struct TaskNode* task, int priority){
-
 	if(day->first == task){
 		day->first = task->next;
+		day->size--;
 		addTask(&day, priority, task->title, task->timeDue, task->description);
 		free(task);
+		return;
 	}
 
 	struct TaskNode* tPtr = day->first;
@@ -226,6 +227,7 @@ void changeTaskPriority(struct DayNode* day, struct TaskNode* task, int priority
 
 //Fixes the priorities of each item afterwards to maintain hierarchy
 void fixPriority(struct DayNode* day){
+
 	struct TaskNode* ptr = day->first;
 	int count = 1;
 	while(ptr != NULL){
@@ -436,7 +438,6 @@ void userEditEntry(struct DayNode **root){
 				printf("That is not a valid input");
 				break;
 			}
-			printf("made it here");
 			changeTaskPriority(dPtr, tPtr, prior);
 			break;
 

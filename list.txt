@@ -3,9 +3,6 @@ ________________________________________________________________________________
 title
 	time			
 	description
-EdittedTitle 2
-	EdittedTime2
-	EdittedDesc2
 tile3
 	time3
 	descrip3	
