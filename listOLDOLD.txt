@@ -1,11 +1,11 @@
-U:
+U: 
 __________________________________________________________________________________________________
 title
 	time			
 	description
-EdittedTitle 2
-	EdittedTime2
-	EdittedDesc2
+title2
+	time2
+	description2
 tile3
 	time3
 	descrip3	
@@ -13,9 +13,9 @@ tile3
 __________________________________________________________________________________________________
 1/6/20
 __________________________________________________________________________________________________
-title1
-	title2
-	title3(yes they shuold b like that)
+jan6title1
+	time1-6-20;1
+	desc1-6-20;1
 title 2 for jan 6
 	time 2 for jan 6
 	desc 2 for jan 6

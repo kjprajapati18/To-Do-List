@@ -63,6 +63,8 @@ int main(void){
         case 'e':
         case 'E':
         	//Edit an entry
+        	userEditEntry(&listRoot);
+        	break;
         case 's':
         case 'S':
             printList(&listRoot);

@@ -39,11 +39,13 @@ struct DayNode* init();
 struct DayNode* addDay(struct DayNode **root, int day, int month, int year);
 struct DayNode* buildList(FILE* file);
 
-void incPriorities(struct TaskNode* start);
+void fixPriority(struct DayNode* day);
+void changeTaskPriority(struct DayNode* day, struct TaskNode* task, int priority);
 void addTask(struct DayNode **target, int priority, char* title, char* timeDue, char* description);
 
 void userAddEntry(struct DayNode** root);
 void userCheckEntry(struct DayNode** root);
+void userEditEntry(struct DayNode **root);
 
 void freeList(struct DayNode** root);
 void printList(struct DayNode** root);
@@ -131,17 +133,15 @@ struct DayNode* buildList(FILE* file){
 			continue;
 		}
 
-		if(strcmp(readLine, "U:\n") == 0){ //Set day ptr to the root(which is the unordered list)
+		if(readLine[0] == 'U' && readLine[1] == ':'){ //Set day ptr to the root(which is the unordered list)
 			ptr = root;
-			fgets(title, MAX_LINE_LENGTH, file); //The next line after a date will always be a ________
-			if(fgets(title, MAX_LINE_LENGTH, file) == NULL) break; //Get title
+			continue;
 
 		} else if (isdigit(readLine[0])){ //If the line starts with a number, then it must be a date
 			free(date);
 			date = findDate(readLine);
 			ptr = addDay(&root, date[0], date[1], date[2]);
-			fgets(title, MAX_LINE_LENGTH, file); //The next line after a date will always be a ________
-			if(fgets(title, MAX_LINE_LENGTH, file) == NULL) break;
+			continue;
 
 		} else {
 			strcpy(title, readLine); //else, there is no date change, just add to the same date as previous iteration
@@ -179,7 +179,7 @@ void addTask(struct DayNode **target, int priority, char* title, char* timeDue, 
 	if(dPtr->first->priority >= priority){
 		newTask->next = dPtr->first;
 		dPtr->first = newTask;
-		if(priority == newTask->next->priority) incPriorities(newTask->next);
+		if(priority == newTask->next->priority) fixPriority(dPtr);
 		return;
 	}
 
@@ -189,7 +189,7 @@ void addTask(struct DayNode **target, int priority, char* title, char* timeDue, 
 		if(tPtr->next->priority >= priority){
 			newTask->next = tPtr->next;
 			tPtr->next = newTask;
-			if(priority == newTask->next->priority) incPriorities(newTask->next);
+			if(priority == newTask->next->priority) fixPriority(dPtr);
 			return;
 		}
 		tPtr = tPtr->next;
@@ -199,14 +199,42 @@ void addTask(struct DayNode **target, int priority, char* title, char* timeDue, 
 	tPtr->next = newTask;
 }
 
-//Increments the priorities of each item afterwards to maintain hierarchy
-void incPriorities(struct TaskNode* start){
-	struct TaskNode* ptr = start;
+void changeTaskPriority(struct DayNode* day, struct TaskNode* task, int priority){
+
+	if(day->first == task){
+		day->first = task->next;
+		addTask(&day, priority, task->title, task->timeDue, task->description);
+		free(task);
+	}
+
+	struct TaskNode* tPtr = day->first;
+	while(tPtr->next != task && tPtr != NULL){
+		tPtr = tPtr->next;
+	}
+
+	if(tPtr == NULL){
+		printf("There was an error.");
+		return;
+	}
+
+	tPtr->next = task->next;
+	addTask(&day, priority, task->title, task->timeDue, task->description);
+	free(task);
+	fixPriority(day);
+
+}
+
+//Fixes the priorities of each item afterwards to maintain hierarchy
+void fixPriority(struct DayNode* day){
+	struct TaskNode* ptr = day->first;
+	int count = 1;
 	while(ptr != NULL){
-		ptr->priority++;
+		ptr->priority = count;
+		count++;
 		ptr = ptr->next;
 	}
 }
+
 
 //Gets User input and prepares for task to be added
 void userAddEntry(struct DayNode** root){
@@ -284,13 +312,14 @@ void userCheckEntry(struct DayNode** root){
 	}
 
 	//Now that we have the day, find the task
+	if(dPtr->day == 0) printf("You have selected the unordered list and there are %d entries.\n", dPtr->size);
+	else printf("\nThe date you have selected is %d/%d/%d and there are %d entries.\n", dPtr->month, dPtr->day, dPtr->year, dPtr->size);
 	do{
-
-		printf("The date you have selected is %d/%d/%d and there are %d entries.\n", dPtr->month, dPtr->day, dPtr->year, dPtr->size);
 		getInp(input, "What number task would you like to check off (1=first, 2=second, etc., B to back): ");
+		if(input[0] == 'b' || input[0] == 'B') return;
 		taskNumber = (int) strtol(input, &ePtr, 10);
-		if(taskNumber < 1 || taskNumber > dPtr->size) printf("Invalid number. Please try again or enter B to back...\n");
 
+		if(taskNumber < 1 || taskNumber > dPtr->size) printf("Invalid number. Please try again or enter B to back...\n\n");
 	}while(taskNumber < 1 || taskNumber > dPtr->size);
 
 	taskNumber--;
@@ -309,8 +338,119 @@ void userCheckEntry(struct DayNode** root){
 	struct TaskNode* temp = tPtr->next;
 	tPtr->next = temp->next;
 	free(temp);
+	dPtr->size--;
+	fixPriority(dPtr);
 }
 
+//Allows user to edit task entries
+void userEditEntry(struct DayNode **root){
+	char input[MAX_LINE_LENGTH];
+	char* ePtr;
+	struct DayNode* dPtr = *root;
+	struct TaskNode* tPtr;
+	int* date;
+	int taskNumber = 0;
+
+	//Get the day. Give the option to back out
+	getInp(input, "What day would you like to edit an entry for (U for unordered, B to back): ");
+	if(input[0] == 'b' || input[0] == 'B') return;
+
+	if(!(input[0] == 'u' || input[0] == 'U')){
+		date = findDate(input);
+		while(dPtr != NULL){
+			if(dPtr->day == date[0] && dPtr->month == date[1] && dPtr->year == date[2]) break;
+			dPtr = dPtr->next;
+		}
+	}
+	if(dPtr == NULL || dPtr->size == 0){
+		printf("\nThere are no tasks in this day to edit!\n");
+		return;
+	}
+
+	//Now that we have the day, find the task
+	do{
+		if(dPtr->day == 0) printf("You have selected the unordered list and there are %d entries.\n", dPtr->size);
+		else printf("The date you have selected is %d/%d/%d and there are %d entries.\n", dPtr->month, dPtr->day, dPtr->year, dPtr->size);
+		getInp(input, "What number task would you like to edit (1=first, 2=second, etc., B to back): ");
+
+		if(input[0] == 'b' || input[0] == 'B') return;
+
+		taskNumber = (int) strtol(input, &ePtr, 10);
+		if(taskNumber < 1 || taskNumber > dPtr->size) printf("Invalid number. Please try again or enter B to back...\n");
+
+	}while(taskNumber < 1 || taskNumber > dPtr->size);
+
+	taskNumber--;
+	tPtr = dPtr->first;
+
+	while(taskNumber>0){
+		tPtr = tPtr->next;
+		taskNumber--;
+	}
+
+	int loop = 1, prior = 0;
+	char temp[MAX_LINE_LENGTH];
+
+	while(loop !=0){
+		temp[0] = '\t';
+		temp[1] = '\0';
+		getInp(input, "Would you like to edit the Title (T), the time due (M), the description (D), or the priority (P)? Enter B to go back: ");
+
+		switch(input[0]){
+		case 't':
+		case 'T':
+			printf("The current title is as follows: \n\t%s\n\n", tPtr->title);
+			getInp(input, "Enter a new title or B to go back: ");
+			if(input[0] == 'b' || input[0] == 'B') break;
+			strcpy(tPtr->title, strcat(input, "\n"));
+			break;
+
+		case 'm':
+		case 'M':
+			printf("The current time due is as follows: \n%s\n\n", tPtr->timeDue);
+			getInp(input, "Enter a new time due, or B to go back: ");
+			if(input[0] == 'b' || input[0] == 'B') break;
+
+			strcat(temp, input);
+			strcat(temp, "\n");
+			strcpy(tPtr->timeDue, temp);
+			break;
+
+		case 'd':
+		case 'D':
+			printf("The current description is as follows: \n%s\n\n", tPtr->description);
+			getInp(input, "Enter a new description or B to go back: ");
+			if(input[0] == 'b' || input[0] == 'B') break;
+
+			strcat(temp, input);
+			strcat(temp, "\n");
+			strcpy(tPtr->description, temp);
+			break;
+
+		case 'p':
+		case 'P':
+			getInp(input, "Enter a new priority or B to go back: ");
+			if(input[0] == 'b' || input[0] == 'B') break;
+			prior = (int) strtol(input, &ePtr, 10);
+			if(prior == 0 && strcmp(ePtr, input)){
+				printf("That is not a valid input");
+				break;
+			}
+			printf("made it here");
+			changeTaskPriority(dPtr, tPtr, prior);
+			break;
+
+		case 'b':
+		case 'B':
+			loop--;
+			break;
+		default:
+			printf("That is an invalid response... \n");
+
+		}
+	}
+
+}
 
 
 //Print current LinkedList
@@ -352,7 +492,7 @@ void saveList(struct DayNode** root, char* filename){
 
 	while(dPtr != NULL){
 		if(dPtr->day == 0){
-			fputs("U: \n", write);
+			fputs("U:\n", write);
 		} else {
 			char date[10];
 			sprintf(date, "%d/%d/%d\n", dPtr->month, dPtr->day, dPtr->year);
