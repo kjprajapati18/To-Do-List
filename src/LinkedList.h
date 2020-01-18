@@ -153,7 +153,7 @@ struct DayNode* buildList(FILE* file){
 		addTask(&ptr, priority, title, time, description);
 	}
 
-	if(date != NULL) free(date);
+	free(date);
 	return root; //Return the root, which contains the whole list in LL format
 }
 
@@ -247,22 +247,30 @@ void userAddEntry(struct DayNode** root){
     char timeDue[20];
     char description[MAX_LINE_LENGTH];
     char priorityStr[10];
+    char* ePtr;
     int priority;
+    int* day = NULL;
     date[0] = '\0';
     title[0] = '\0';
     timeDue[0] = '\0';
     description[0] = '\0';
 
     //Request inputs
-    getInp(date, "What date would you like to add an entry for (enter U for unordered list, else mm/dd/yy)? ");
+    do{
+    	getInp(date, "What date would you like to add an entry for? (enter U for unordered list, mm/dd/yy for that date, or B to back): ");
+    	if(date[0] == 'b' || date[0] == 'B') return;
+    	day = findDate(date);
+    	if(day==NULL) printf("That is an invalid date...\n\n");
+    }while(day == NULL);
+
     getInp(title, "Please enter a title: ");
     getInp(timeDue, "Enter a time due: ");
     getInp(description, "Enter a description: ");
-    getInp(priorityStr, "What number entry should this be for that day (1= first entry, 2= second, etc.): ");
-    priority = atoi(priorityStr);
 
-    //Find which day to put this entry
-    int* day = findDate(date);
+    do{
+    	getInp(priorityStr, "What number entry should this be for that day (1= first entry, 2= second, etc.): ");
+    	priority = strtol(priorityStr, &ePtr, 10);
+    }while(priority < 1 || strcmp(priorityStr, ePtr) == 0);
 
     //Add spaces to match formatting
     int titleLen = strlen(title);
@@ -277,10 +285,9 @@ void userAddEntry(struct DayNode** root){
     description[strlen(description)] = '\n';
 
 
-    //-1 means that its a part of the unordered list*
-    if((*day) == -1){
-        printf("good");
-    	//writeEntry("U", title, timeDue, description, filename);
+    //0 means that its a part of the unordered list*
+    if(day[0] == 0){
+        addTask(root, priority, title, timeDue, description);
     } else {
     	dPtr = addDay(root, day[0], day[1], day[2]);
     	addTask(&dPtr, priority, title, timeDue, description);
@@ -294,20 +301,23 @@ void userCheckEntry(struct DayNode** root){
 	char* ePtr;
 	struct DayNode* dPtr = *root;
 	struct TaskNode* tPtr;
-	int* date;
+	int* date = NULL;
 	int taskNumber = 0;
 
 	//Get the day. Give the option to back out
-	getInp(input, "What day would you like to check off an entry for (U for unordered, B to back): ");
-	if(input[0] == 'b' || input[0] == 'B') return;
-
-	if(!(input[0] == 'u' || input[0] == 'U')){
+	do{
+		getInp(input, "What day would you like to check off an entry for (U for unordered, B to back): ");
+		if(input[0] == 'b' || input[0] == 'B') return;
 		date = findDate(input);
-		while(dPtr != NULL){
-			if(dPtr->day == date[0] && dPtr->month == date[1] && dPtr->year == date[2]) break;
-			dPtr = dPtr->next;
-		}
+		if(date == NULL) printf("That is an invalid date...\n\n");
+	} while(date == NULL);
+
+	while(dPtr != NULL){
+		if(dPtr->day == date[0] && dPtr->month == date[1] && dPtr->year == date[2]) break;
+		dPtr = dPtr->next;
 	}
+	free(date);
+
 	if(dPtr == NULL || dPtr->size == 0){
 		printf("\nThere are no tasks in this day to complete!\n");
 		return;
@@ -354,20 +364,23 @@ void userEditEntry(struct DayNode **root){
 	int taskNumber = 0;
 
 	//Get the day. Give the option to back out
-	getInp(input, "What day would you like to edit an entry for (U for unordered, B to back): ");
-	if(input[0] == 'b' || input[0] == 'B') return;
-
-	if(!(input[0] == 'u' || input[0] == 'U')){
+	do{
+		getInp(input, "What day would you like to edit an entry for (U for unordered, B to back): ");
+		if(input[0] == 'b' || input[0] == 'B') return;
 		date = findDate(input);
-		while(dPtr != NULL){
-			if(dPtr->day == date[0] && dPtr->month == date[1] && dPtr->year == date[2]) break;
-			dPtr = dPtr->next;
-		}
+		if(date == NULL) printf("That is an invalid date...\n\n");
+	} while(date == NULL);
+
+	while(dPtr != NULL){
+		if(dPtr->day == date[0] && dPtr->month == date[1] && dPtr->year == date[2]) break;
+		dPtr = dPtr->next;
 	}
+	free(date);
 	if(dPtr == NULL || dPtr->size == 0){
 		printf("\nThere are no tasks in this day to edit!\n");
 		return;
 	}
+
 
 	//Now that we have the day, find the task
 	do{
@@ -434,7 +447,7 @@ void userEditEntry(struct DayNode **root){
 			getInp(input, "Enter a new priority or B to go back: ");
 			if(input[0] == 'b' || input[0] == 'B') break;
 			prior = (int) strtol(input, &ePtr, 10);
-			if(prior == 0 && strcmp(ePtr, input)){
+			if(prior == 0 && strcmp(ePtr, input) == 0){
 				printf("That is not a valid input");
 				break;
 			}

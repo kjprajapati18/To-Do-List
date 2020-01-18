@@ -72,12 +72,17 @@ int* findDate(char input[]){
 		} else if (!isdigit(input[i])){
 			if(input[i] == '\n') continue;
 			printf("\nSomething went wrong with reading the date...\n");
-			return (int*)0;
+			free(date);
+			return NULL;
 		}
 		*(date+count) *= 10;
 		*(date+count) += input[i] - '0';
 	}
-
+	if(count != 2){
+		printf("\nYour input is not in mm/dd/yy format. Please make sure to have the correct number of /...\n");
+		free(date);
+		return NULL;
+	}
 	//Flip the second and first entry because it is written as mm/dd/yy but needs to be stored d,m,y
 	int temp = *(date+1);
 	*(date+1) = *date;

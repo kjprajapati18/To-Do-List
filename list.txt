@@ -1,5 +1,8 @@
 U:
 __________________________________________________________________________________________________
+Entry1User
+	9am to 5pm
+	The user entered this entry
 title
 	time			
 	description
